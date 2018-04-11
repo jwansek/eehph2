@@ -4,6 +4,7 @@ from tkinter import messagebox
 from tkinter import filedialog
 from PIL import Image, ImageTk, ImageOps
 import screeninfo
+import webbrowser
 import threading
 import win32file
 import win32api
@@ -71,6 +72,7 @@ class App(tk.Tk):
         imageMenu.add_command(label='Rotate 90° anticlockwise', accelerator = "Shift+R", image = self.__icon_anticlockwise, compound = tk.LEFT, command=self.img_viewer.buttons.anticlockwise)
         self.__icon_flip = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "flip.png")).resize((16, 16), Image.ANTIALIAS))
         imageMenu.add_command(label='Flip image', accelerator = "F", image = self.__icon_flip, compound = tk.LEFT, command=self.img_viewer.buttons.flip)
+        menu.add_command(label = "Source", underline = 0, command = lambda: webbrowser.open_new("https://github.com/jwansek/eehph2"))
 
         self.bind('<Left>', self.img_viewer.buttons.backwards)
         self.bind('<Right>', self.img_viewer.buttons.forwards)
