@@ -17,6 +17,12 @@ IMPORT_FILES = ['.png', '.jpg', '.jfif', '.jpg_large', '.gif']
 class App(tk.Tk):
 
     def __init__(self, path = None, *args, **kwargs):
+        """Main class
+        
+        Keyword Arguments:
+            path {str} -- path to the image to open on (default: {None})
+        """
+
         tk.Tk.__init__(self)
 
         self.title("EEHPH Photo Viewer v2")
@@ -91,12 +97,29 @@ class App(tk.Tk):
         self.bind('<Control-e>', self.img_viewer.edit_image)
 
     def __open(self, event=None):
+        """Private. Used to open an image asking the user where
+        they want to open an image from. Then calls the img_viewer
+        class.
+        
+        Keyword Arguments:
+            event {event} -- Unused. Used to make the method
+            work with events (default: {None})
+        """
+
         filetypes = get_filetypes()
         path = filedialog.askopenfilename(filetypes=filetypes)
         if path != '' or path == None:
             self.img_viewer.open_image(path)
 
     def __open_folder(self, event=None):
+        """Opens a folder from disk by opening a file from it.
+        Checks allowed files are present first
+        
+        Keyword Arguments:
+            event {event} -- Unused. Used to make the method
+            work with events (default: {None})
+        """
+
         path = filedialog.askdirectory()
         files = []
         if path != '' or path == None:
@@ -112,6 +135,13 @@ class App(tk.Tk):
 class DriveViewer(tk.Frame):
 
     def __init__(self, parent):
+        """Widget made up of a ttk.Notebook to the user can see
+        which drives they want.
+        
+        Arguments:
+            parent {object} -- parent class
+        """
+
         tk.Frame.__init__(self, parent)
 
         self.home_icon = tk.PhotoImage(file = os.path.join('Assets', 'home.png'))
@@ -144,12 +174,30 @@ class DriveViewer(tk.Frame):
                 pass
 
     def __get_drives(self):
+        """Private. Retutns the letters of all the drives
+        attatched to the system.
+        
+        Returns:
+            List -- List of drives e.g. ["C:\", "D:\"]
+        """ 
+
         return win32api.GetLogicalDriveStrings().split('\x00')[:-1]
 
 class FileTree(tk.Frame):
     columns = ('path', 'filetype', 'size')
 
     def __init__(self, parent, start = os.path.expanduser('~')):
+        """Filetree widget to the user can navigate through files.
+        Made of ttk.Treeview. Only dirs and allowed images show up.
+        For speed, child dirs don't show up until they are clicked on.
+        
+        Arguments:
+            parent {object} -- class that calls this widget
+        
+        Keyword Arguments:
+            start {str} -- Drive to make tree of. Defaults to user's home folder. (default: {os.path.expanduser('~')})
+        """
+
         tk.Frame.__init__(self)
         self.parent = parent
         self.starting_dir = start
@@ -188,6 +236,16 @@ class FileTree(tk.Frame):
         self.tree.bind('<<TreeviewOpen>>', self.__on_click)
 
     def __get_dirs(self, start):
+        """Private. Gets child files and dirs that are in IMPORT_FILES.
+        Only allowed filetypes show up.
+        
+        Arguments:
+            start {str} -- Path of parent directory
+        
+        Returns:
+            List -- List of all allowed dirs and files.
+        """
+
         dirs = []
         files = []
         try:
@@ -205,6 +263,15 @@ class FileTree(tk.Frame):
             messagebox.showerror('', 'Access Denied')
 
     def __dir_type(self, dir_):
+        """Private. Works out the file type of an item
+        
+        Arguments:
+            dir_ {str} -- item of file to check
+        
+        Returns:
+            str -- returns 'hidden' or 'directory', else the file extenstion
+        """
+
         extension = os.path.splitext(dir_)[-1:][0]
         if dir_.startswith('.'):
             return 'hidden'
@@ -214,6 +281,15 @@ class FileTree(tk.Frame):
             return extension.lower()
 
     def __on_click(self, event):
+        """Private. Event holder for when the user clicks on a node to expand
+        Works out child folders and dirs. Adds a 'dummy' child to each
+        item so that the + icon is there. This is removed if the folder has
+        usable items in it.
+        
+        Arguments:
+            event {event} -- so the method works with events
+        """
+
         items = []
         id = os.path.normpath(self.tree.focus())
         if not os.path.exists(id):
@@ -234,6 +310,16 @@ class FileTree(tk.Frame):
                 self.parent.img_viewer.open_image(path=id)
 
     def __populate_node(self, path, root=False):
+        """Private. Populates a parent node. For more infomation, see
+        __on_click().
+        
+        Arguments:
+            path {str} -- path of parent node
+        
+        Keyword Arguments:
+            root {bool} -- Is the node a root? (probably not) (default: {False})
+        """
+
         if os.path.splitext(path)[-1:][0] == '':
             if root:
                 parent = ''
@@ -277,6 +363,16 @@ class FileTree(tk.Frame):
             pass
 
     def __get_size(self, path):
+        """Private. Returns the size of a file. From:
+        https://pyinmyeye.blogspot.co.uk/2012/07/tkinter-multi-column-list-demo.html
+        
+        Arguments:
+            path {str} -- Path to file
+        
+        Returns:
+            str -- file size in bytes/KB/MB/GB
+        """
+
         size = os.path.getsize(path)
         KB = 1024.0
         MB = KB * KB
@@ -298,6 +394,13 @@ class ImageViewer(tk.Frame):
     large_img = None
 
     def __init__(self, parent):
+        """Class to show images on screen. Resizes images
+        appropopriately so it fits on the screen.
+        
+        Arguments:
+            parent {object} -- class that called this
+        """
+
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.focus_set()
@@ -309,11 +412,25 @@ class ImageViewer(tk.Frame):
         self.buttons.pack()
 
     def open_image(self, path):
+        """Changes the label to show 'loading' and starts a loading thread.
+        
+        Arguments:
+            path {str} -- path of image to open
+        """
+
         self.lbl_img.config(image = "", text = "Loading...")
         print(path)
         threading.Thread(target = self.__open, args = (path, None)).start() #for some reason it requires at least two args or weird stuff starts happening
     
     def __open(self, arg, _):
+        """Private. Actually open an image. Work out an appropriate size and show on screen.
+        
+        Arguments:
+            arg {str/Image} -- str of path to open or Image object to show
+            _ {N/A} -- Unused. Required for some reason since apparently threading.Thread() requires at least two
+            args or weird stuff starts happenning.
+        """
+
         if type(arg) is str:
             self.path = arg
             img = Image.open(self.path)
@@ -335,22 +452,29 @@ class ImageViewer(tk.Frame):
         maxheight = appheight - (btnsheight + 10)
         print(maxwidth, maxheight)
 
+
+        #image is too big in both directions
+        #https://stackoverflow.com/questions/6565703/math-algorithm-fit-image-to-screen-retain-aspect-ratio
         if imgwidth > maxwidth and imgheight > maxheight:
             if (maxwidth/maxheight) > (imgwidth/imgheight):
                 img = img.resize((int(imgwidth * maxheight / imgheight) - 5, maxheight - 5), Image.ANTIALIAS)
             else:
                 img = img.resize((maxwidth, int(imgheight * maxwidth / imgwidth)), Image.ANTIALIAS)
 
+        #image is too wide
         if img.size[0] > maxwidth:
             img = self.resize(img, width = maxwidth)
+        #image is too taall
         if img.size[1] > maxheight:
             img = self.resize(img, height = maxheight)
 
+        #display
         dims = img.size
         tkimg = ImageTk.PhotoImage(image = img)
         self.lbl_img.config(image = tkimg)
         self.lbl_img.image = tkimg
 
+        #update label
         text = "%-56s %s (%ix%i)" % (os.path.split(self.path)[-1:][0], str(int((img.size[0] / self.orig_dims[0]) * 100)) + "%", self.orig_dims[0], self.orig_dims[1])
         self.buttons.lbl_text.config(text = text)
 
@@ -369,12 +493,26 @@ class ImageViewer(tk.Frame):
         raise TypeError("Missing argument: must have 'height' or 'width'.")
 
     def edit_image(self, event = None):
+        """Event placeholder to edit an image. Calls the EditWindow()
+        class.
+        
+        Keyword Arguments:
+            event {event} -- Used to make the method work with events.
+             (default: {None})
+        """
+
         if self.large_img is not None:
             EditWindow(self, self.large_img)
 
 class Buttons(tk.Frame):
 
     def __init__(self, parent):
+        """Class widget for the buttons at the bottom of the screen
+        
+        Arguments:
+            parent {object} -- class that called this
+        """
+
         tk.Frame.__init__(self, parent)
         self.parent = parent
 
@@ -407,9 +545,22 @@ class Buttons(tk.Frame):
         ttk.Button(self, image = self.img_forwards, command = self.forwards).grid(row = 1, column = 10)
 
     def __get_images(self):
+        """Private. Returns all avaliable files
+        
+        Returns:
+            list -- List of files that the app can open
+        """
+
         return [file for file in os.listdir(os.path.split(self.parent.parent.img_viewer.path)[:-1][0]) if os.path.splitext(file)[1].lower() in IMPORT_FILES]
 
     def backwards(self, event = None):
+        """Event placeholder for when someone wants to go back an image.
+        Wraps around if required.
+        
+        Keyword Arguments:
+            event {event} -- Makes this method work with events (default: {None})
+        """
+
         if self.parent.parent.img_viewer.path is not None:
             path = self.parent.parent.img_viewer.path
             if path is not None:
@@ -421,6 +572,13 @@ class Buttons(tk.Frame):
                     self.parent.parent.img_viewer.open_image(os.path.join(os.path.split(path)[:-1][0], images[index - 1]))
 
     def forwards(self, event = None):
+        """Event placeholder for when someone wants to go forwards an image.
+        Wraps around if nessisary.
+        
+        Keyword Arguments:
+            event {event} -- Makes this method work with events (default: {None})
+        """
+
         if self.parent.parent.img_viewer.path is not None:
             path = self.parent.parent.img_viewer.path
             if path is not None:
@@ -433,6 +591,12 @@ class Buttons(tk.Frame):
                 self.parent.parent.img_viewer.open_image(os.path.join(os.path.split(path)[:-1][0], images[0]))
 
     def clipboard(self, event = None):
+        """Adds the path to the current image to the clipboard.
+        
+        Keyword Arguments:
+            event {event} -- Makes this method work with events (default: {None})
+        """
+
         if self.parent.parent.img_viewer.path is not None:
             print(self.parent.parent.img_viewer.path)
             self.parent.parent.clipboard_clear()
@@ -440,6 +604,12 @@ class Buttons(tk.Frame):
             self.parent.parent.update()
 
     def save(self, event = None):
+        """Allows the user to copy this file to another directory
+        
+        Keyword Arguments:
+            event {event} --  Makes this method work with events (default: {None})
+        """
+        Allows the user to copy this file to another directory
         if self.parent.parent.img_viewer.path is not None:
             orig = self.parent.parent.img_viewer.path
             if orig is not None:
@@ -449,24 +619,57 @@ class Buttons(tk.Frame):
                     messagebox.showinfo('Operation complete', 'Copied file %s to %s.' % (os.path.normpath(orig), os.path.normpath(path)))
 
     def fullscreen(self, event = None):
+        """Opens a Toplevel window with the current image shown in full on it.
+        Calls the FullscreenWindow() class.
+        
+        Keyword Arguments:
+            event {event} -- Makes this method work with events (default: {None})
+        """
+        Opens a Toplevel window with the current image shown in full on it.
         if self.parent.parent.img_viewer.path is not None:
             FullscreenWindow(self, Image.open(self.parent.parent.img_viewer.path))
 
     def anticlockwise(self, event = None):
+        """Rotates the current image 90 degress anticlockwise.
+        
+        Keyword Arguments:
+            event {event} -- Makes this method work with events (default: {None})
+        """
+
         if self.parent.parent.img_viewer.path is not None:
             self.parent.open_image(self.parent.large_img.rotate(-90, expand = 1))
 
     def clockwise(self, event = None):
+        """Rotates the current image 90 degrees clockwise.
+        
+        Keyword Arguments:
+            event {event} -- Makes this method work with events (default: {None})
+        """
+
         if self.parent.parent.img_viewer.path is not None:
             self.parent.open_image(self.parent.large_img.rotate(90, expand = 1))
 
     def flip(self, event = None):
+        """Flips the image.
+        
+        Keyword Arguments:
+            event {event} -- Makes this method work with events (default: {None})
+        """
+
         if self.parent.parent.img_viewer.path is not None:
             self.parent.open_image(ImageOps.mirror(self.parent.large_img))
 
 class FullscreenWindow(tk.Toplevel):
 
     def __init__(self, parent, img):
+        """Opens a tk.Toplevel window which shows the image as large as possible on
+        it. Closed by Esc key.
+        
+        Arguments:
+            parent {object} -- class that called this class.
+            img {Image} -- image to display.
+        """
+
         tk.Toplevel.__init__(self, parent)
         self.iconbitmap(os.path.join('Assets', 'icon.ico'))
         self.attributes('-fullscreen', True)
@@ -486,6 +689,14 @@ class FullscreenWindow(tk.Toplevel):
 class EditWindow(tk.Toplevel):
 
     def __init__(self, parent, img):
+        """tk.Toplevel widget where the user can preform various manupulations
+        on an image and saves the new one to disc.
+        
+        Arguments:
+            parent {object} -- class that called this class
+            img {Image} -- image to be operated on.
+        """
+
         tk.Toplevel.__init__(self, parent)
         self.parent = parent
         self.img = img
@@ -527,6 +738,13 @@ class EditWindow(tk.Toplevel):
         ttk.Button(self, text = "Cancel", image = self.__icon_cross, compound = tk.LEFT, command = lambda: self.destroy()).grid(row = 3, column = 1, padx = 5, pady = 5, sticky = tk.E)
 
     def __fix_ratio(self, hw):
+        """Private. Works out the other dimention so that the aspect ratio is mantained.
+        
+        Arguments:
+            hw {str} -- char indicating if the calculations should be preformed on the height
+            or the width.
+        """
+
         try:
             if hw == "x":
                 self.ent_y.delete(0, tk.END)
@@ -539,6 +757,18 @@ class EditWindow(tk.Toplevel):
             self.focus_set()
 
     def __calc(self, img, **kwargs):
+        """Private. Calculates the other dimention so that aspect ratio is mantained.
+        
+        Arguments:
+            img {Image} -- image that's going to be resized. Needed for the calculation
+        
+        Raises:
+            TypeError -- Thrown if neither 'height' nor 'width' args are found.
+        
+        Returns:
+            int -- size of the other dim.
+        """
+
         if list(kwargs.keys())[0] == 'height':
             baseheight = kwargs['height']
             hpercent = baseheight / float(img.size[1])
@@ -552,6 +782,12 @@ class EditWindow(tk.Toplevel):
         raise TypeError("Missing argument: must have 'height' or 'width'.")
 
     def __go(self):
+        """Private. Does transformations and saves to disc.
+        
+        Returns:
+            None -- If user cancelled.
+        """
+
         if self.ent_x.get().isdigit() and self.ent_y.get().isdigit():
             self.img = self.img.resize((int(self.ent_x.get()), int(self.ent_y.get())), Image.ANTIALIAS)
             if self.flip.get():
@@ -578,23 +814,29 @@ class EditWindow(tk.Toplevel):
             messagebox.showwarning("", "Please only input integers")
             self.focus_set()
 
-
-
-
-
 def max_height():
+    """Returns an appropriate height for the app so that it fits on the screen.
+    
+    Returns:
+        {int} -- height of app (pixels)
+    """
+
     return int(min([i.height for i in screeninfo.get_monitors()]) * 2/3)
 
 def max_width():
+    """Returns an appropriate width for the app so that it fits on the screen.
+
+    Returns:
+        {int} -- the width of the app (pixels)
+    """
+
     return int(min([i.width for i in screeninfo.get_monitors()]) * 2/3)
 
 def get_filetypes():
-    return (('%s images' % type[1:].upper(), type) for type in IMPORT_FILES)
+    """Returns tuples of the avaliable filetpyes for use in a filedialog
+    
+    Returns:
+        tuple -- avaliable filetypes
+    """
 
-if __name__ == "__main__":
-    try:
-        start = sys.argv[1]
-    except IndexError:
-        start = None
-    root = App(start)
-    root.mainloop()
+    return (('%s images' % type[1:].upper(), type) for type in IMPORT_FILES)
