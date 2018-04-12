@@ -4,7 +4,6 @@ on_install_setup/__pycache__/
 cleanup/build/
 cleanup/dist/
 cleanup/__pycache__/
-inno/
 
 #stuff below here is a template
 # Byte-compiled / optimized / DLL files
