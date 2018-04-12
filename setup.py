@@ -27,7 +27,7 @@ exec_ = Executable(
 setup(
     name = "EEHPH Photo Viewer v2",
     options = {"build_exe": {"packages": packages, "include_files": include_files}},
-    version = "2.0.1",
+    version = "2.1.1",
     description = "EEHPH2 by AE computer vision",
     author = "Edward Attenborough",
     executables = [exec_]
