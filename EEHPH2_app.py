@@ -39,11 +39,11 @@ class App(tk.Tk):
         self.img_viewer = ImageViewer(self)
         paned.add(self.img_viewer)
 
-        if start is not None:
+        if path is not None:
             if os.path.splitext(path)[1] not in IMPORT_FILES:
                 messagebox.showerror('Error', 'Invalid file type. EEHPH2 accepts only %s.' % (' ').join(IMPORT_FILES))
             else:
-                self.img_viewer.open_image(start)
+                self.img_viewer.open_image(path)
 
         #draw menubar
         menu = tk.Menu(self)
@@ -609,7 +609,6 @@ class Buttons(tk.Frame):
         Keyword Arguments:
             event {event} --  Makes this method work with events (default: {None})
         """
-        Allows the user to copy this file to another directory
         if self.parent.parent.img_viewer.path is not None:
             orig = self.parent.parent.img_viewer.path
             if orig is not None:
@@ -625,7 +624,6 @@ class Buttons(tk.Frame):
         Keyword Arguments:
             event {event} -- Makes this method work with events (default: {None})
         """
-        Opens a Toplevel window with the current image shown in full on it.
         if self.parent.parent.img_viewer.path is not None:
             FullscreenWindow(self, Image.open(self.parent.parent.img_viewer.path))
 
