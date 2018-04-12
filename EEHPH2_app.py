@@ -56,6 +56,9 @@ class App(tk.Tk):
         editMenu.add_command(label='Copy path to clipboard', accelerator = "Ctrl+C", image=self.__icon_clipboard, compound=tk.LEFT, command=self.img_viewer.buttons.clipboard)
         self.__icon_save = tk.PhotoImage(file=os.path.join('Assets', 'save_small.png'))
         editMenu.add_command(label='Save image to another location', accelerator = "Ctrl+S", image=self.__icon_save, compound=tk.LEFT, command=self.img_viewer.buttons.save)
+        editMenu.add_separator()
+        self.__icon_edit = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "edit.png")).resize((16, 16), Image.ANTIALIAS))
+        editMenu.add_command(label = 'Edit image', accelerator = "Ctrl+E", command = self.img_viewer.edit_image, image = self.__icon_edit, compound = tk.LEFT)
         viewMenu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label='View', menu=viewMenu, underline=0)
         self.__icon_fullscreen = tk.PhotoImage(file=os.path.join('Assets', 'images.png'))
@@ -85,6 +88,7 @@ class App(tk.Tk):
         self.bind('<r>', self.img_viewer.buttons.clockwise)
         self.bind('<R>', self.img_viewer.buttons.anticlockwise)
         self.bind('<f>', self.img_viewer.buttons.flip)
+        self.bind('<Control-e>', self.img_viewer.edit_image)
 
     def __open(self, event=None):
         filetypes = get_filetypes()
@@ -347,9 +351,10 @@ class ImageViewer(tk.Frame):
         self.lbl_img.config(image = tkimg)
         self.lbl_img.image = tkimg
 
-        text = "%-46s %s (%ix%i)" % (os.path.split(self.path)[-1:][0], str(int((img.size[0] / self.orig_dims[0]) * 100)) + "%", self.orig_dims[0], self.orig_dims[1])
+        text = "%-56s %s (%ix%i)" % (os.path.split(self.path)[-1:][0], str(int((img.size[0] / self.orig_dims[0]) * 100)) + "%", self.orig_dims[0], self.orig_dims[1])
         self.buttons.lbl_text.config(text = text)
 
+    #unused
     def resize(self, img, **kwargs):
         if list(kwargs.keys())[0] == 'height':
             baseheight = kwargs['height']
@@ -362,6 +367,10 @@ class ImageViewer(tk.Frame):
             hsize = int(float(img.size[1]) * float(wpercent))
             return img.resize((basewidth, hsize), Image.ANTIALIAS)
         raise TypeError("Missing argument: must have 'height' or 'width'.")
+
+    def edit_image(self, event = None):
+        if self.large_img is not None:
+            EditWindow(self, self.large_img)
 
 class Buttons(tk.Frame):
 
@@ -380,20 +389,22 @@ class Buttons(tk.Frame):
         self.img_fullscreen = tk.PhotoImage(file = os.path.join("Assets", "fullscreen.png"))
         self.img_save = tk.PhotoImage(file = os.path.join("Assets", "save.png"))
         self.img_flip = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "flip.png")).resize((40, 40), Image.ANTIALIAS))
+        self.img_edit = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "edit.png")).resize((40, 40), Image.ANTIALIAS))
 
         self.lbl_text = tk.Label(self)
-        self.lbl_text.grid(row = 0, column = 0, columnspan = 9)
+        self.lbl_text.grid(row = 0, column = 0, columnspan = 11)
 
         ttk.Button(self, image = self.img_backwards, command = self.backwards).grid(row = 1, column = 0)
         ttk.Button(self, image = self.img_rotate_anticlockwise, command = self.anticlockwise).grid(row = 1, column = 1)
         ttk.Separator(self, orient=tk.VERTICAL).grid(row = 1, column = 2, sticky = 'ns', padx = 3)
-        ttk.Button(self, image = self.img_clipboard, command = self.clipboard).grid(row = 1, column = 3)
-        ttk.Button(self, image = self.img_fullscreen, command = self.fullscreen).grid(row = 1, column = 4)
-        ttk.Button(self, image = self.img_save, command = self.save).grid(row = 1, column = 5)
-        ttk.Button(self, image = self.img_flip, command = self.flip).grid(row = 1, column = 6)
-        ttk.Separator(self, orient=tk.VERTICAL).grid(row = 1, column = 7, sticky = 'ns', padx = 3)
-        ttk.Button(self, image = self.img_rotate_clockwise, command = self.clockwise).grid(row = 1, column = 8)
-        ttk.Button(self, image = self.img_forwards, command = self.forwards).grid(row = 1, column = 9)
+        ttk.Button(self, image = self.img_edit, command = self.parent.edit_image).grid(row = 1, column = 3)
+        ttk.Button(self, image = self.img_clipboard, command = self.clipboard).grid(row = 1, column = 4)
+        ttk.Button(self, image = self.img_fullscreen, command = self.fullscreen).grid(row = 1, column = 5)
+        ttk.Button(self, image = self.img_save, command = self.save).grid(row = 1, column = 6)
+        ttk.Button(self, image = self.img_flip, command = self.flip).grid(row = 1, column = 7)
+        ttk.Separator(self, orient=tk.VERTICAL).grid(row = 1, column = 8, sticky = 'ns', padx = 3)
+        ttk.Button(self, image = self.img_rotate_clockwise, command = self.clockwise).grid(row = 1, column = 9)
+        ttk.Button(self, image = self.img_forwards, command = self.forwards).grid(row = 1, column = 10)
 
     def __get_images(self):
         return [file for file in os.listdir(os.path.split(self.parent.parent.img_viewer.path)[:-1][0]) if os.path.splitext(file)[1].lower() in IMPORT_FILES]
@@ -471,6 +482,105 @@ class FullscreenWindow(tk.Toplevel):
         lbl_img.image = tkimg
         lbl_img.grid(row=0, column=0, sticky='nsew')
         self.bind('<Escape>', lambda a: self.destroy())
+
+class EditWindow(tk.Toplevel):
+
+    def __init__(self, parent, img):
+        tk.Toplevel.__init__(self, parent)
+        self.parent = parent
+        self.img = img
+        self.iconbitmap(os.path.join("Assets", "icon.ico"))
+        self.resizable(0, 0)
+        self.orig_dims = img.size
+
+        lbf_resize = tk.LabelFrame(self, text = "Resize image")
+        lbf_resize.grid(row = 0, column = 0, columnspan = 2, padx = 5, pady = 5)
+
+        self.maintainratio = tk.BooleanVar()
+        ttk.Label(lbf_resize, text = "Width:").grid(row = 0, column = 0, padx = 6, pady = 6)
+        ttk.Label(lbf_resize, text = "Height:").grid(row = 1, column = 0, padx = 6, pady = 6)
+        self.ent_x = ttk.Entry(lbf_resize, width = 5)
+        self.ent_x.grid(row = 0, column = 1, padx = 3, pady = 6)
+        self.ent_y = ttk.Entry(lbf_resize, width = 5)
+        self.ent_y.grid(row = 1, column = 1, padx = 3, pady = 6)
+        ttk.Button(lbf_resize, text = "Fix ratio", command = lambda: self.__fix_ratio("x")).grid(row = 0, column = 2, padx = 3, pady = 6)
+        ttk.Button(lbf_resize, text = "Fix ratio", command = lambda: self.__fix_ratio("y")).grid(row = 1, column = 2, padx = 3, pady = 6)
+
+        self.ent_x.insert(0, self.orig_dims[0])
+        self.ent_y.insert(0, self.orig_dims[1])
+
+        lbf_transformation = tk.LabelFrame(self, text = "Image transformation")
+        lbf_transformation.grid(row = 1, column = 0, columnspan = 2, padx = 5, pady = 5)
+
+        self.flip = tk.BooleanVar()
+        ttk.Checkbutton(lbf_transformation, text = "Flip image", variable = self.flip, onvalue = True, offvalue = False).grid(row = 0, column = 0, columnspan = 2, padx = 6, pady = 6)
+        tk.Label(lbf_transformation, text = "Rotation:").grid(row = 1, column = 0, padx = 6, pady = 6)
+        self.ent_rotate = ttk.Entry(lbf_transformation, width = 5)
+        self.ent_rotate.grid(row = 1, column = 1, padx = 3, pady = 3)
+
+        ttk.Separator(self).grid(row = 2, column = 0, columnspan = 2, sticky = "ew")
+
+        self.__icon_tick = tk.PhotoImage(file = os.path.join("Assets", "tick.png"))
+        self.__icon_cross = tk.PhotoImage(file = os.path.join("Assets", "cross.png"))
+
+        ttk.Button(self, text = "Save", image = self.__icon_tick, compound = tk.LEFT, command = self.__go).grid(row = 3, column = 0, padx = 5, pady = 5, sticky = tk.W)
+        ttk.Button(self, text = "Cancel", image = self.__icon_cross, compound = tk.LEFT, command = lambda: self.destroy()).grid(row = 3, column = 1, padx = 5, pady = 5, sticky = tk.E)
+
+    def __fix_ratio(self, hw):
+        try:
+            if hw == "x":
+                self.ent_y.delete(0, tk.END)
+                self.ent_y.insert(0, self.__calc(self.img, width = int(self.ent_x.get())))
+            elif hw == "y":
+                self.ent_x.delete(0, tk.END)
+                self.ent_x.insert(0, self.__calc(self.img, height = int(self.ent_y.get())))
+        except ValueError:
+            messagebox.showwarning("", "Please only input integers")
+            self.focus_set()
+
+    def __calc(self, img, **kwargs):
+        if list(kwargs.keys())[0] == 'height':
+            baseheight = kwargs['height']
+            hpercent = baseheight / float(img.size[1])
+            wsize = int(float(img.size[0]) * float(hpercent))
+            return wsize
+        elif list(kwargs.keys())[0] == 'width':
+            basewidth = kwargs['width']
+            wpercent = basewidth / float(img.size[0])
+            hsize = int(float(img.size[1]) * float(wpercent))
+            return hsize
+        raise TypeError("Missing argument: must have 'height' or 'width'.")
+
+    def __go(self):
+        if self.ent_x.get().isdigit() and self.ent_y.get().isdigit():
+            self.img = self.img.resize((int(self.ent_x.get()), int(self.ent_y.get())), Image.ANTIALIAS)
+            if self.flip.get():
+                self.img = ImageOps.mirror(self.img)
+            if self.ent_rotate.get() != '':
+                if self.ent_rotate.get().isdigit():
+                    self.img = self.img.rotate(int(self.ent_rotate.get()), expand = 1)
+                else:
+                    messagebox.showwarning("", "Please only input integers")
+                    self.focus_set()
+                    return
+            path = filedialog.asksaveasfile(filetypes = (("PNG images", "*.png"), ("JPEG images", "*.jpg")))
+            if path == '' or path is None:
+                return  #user cancelled
+            else:
+                path = path.name
+                if os.path.splitext(path)[1] == "":
+                    messagebox.showinfo("", "No file extension specified. Saving as .png.")
+                    os.remove(path)
+                    path += ".png"
+                self.img.save(path)
+                messagebox.showinfo("Done", "Image saved at %s" % path)
+        else:
+            messagebox.showwarning("", "Please only input integers")
+            self.focus_set()
+
+
+
+
 
 def max_height():
     return int(min([i.height for i in screeninfo.get_monitors()]) * 2/3)
