@@ -2,7 +2,7 @@ import sys
 import os
 
 def find_location():
-    filelocation = os.path.join(os.getenv("LOCALAPPDATA"), "EEPHPH2", "location.txt")
+    filelocation = os.path.join(os.environ['ALLUSERSPROFILE'], "EEHPH2", "location.txt")
     file = open(filelocation, "r")
     applocation = file.readline()
     file.close()

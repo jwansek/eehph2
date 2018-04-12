@@ -3,7 +3,7 @@ import os
 
 location = sys.argv[1]
 
-appdata = os.path.join(os.getenv("LOCALAPPDATA"), "EEPHPH2")
+appdata = os.path.join(os.environ['ALLUSERSPROFILE'], "EEHPH2")
 
 if not os.path.exists(appdata):
     os.mkdir(appdata)

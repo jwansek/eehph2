@@ -12,6 +12,7 @@ include_files = [
     "Assets\\",
     "LICENSE.txt",
     "on_install_setup.exe",
+    "cleanup.exe",
     "EEHPH2_app.py",
     r"C:\Program Files (x86)\Python36_64\DLLs\tcl86t.dll",
     r"C:\Program Files (x86)\Python36_64\DLLs\tk86t.dll",
