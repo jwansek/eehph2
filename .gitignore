@@ -1,6 +1,9 @@
 on_install_setup/build/
 on_install_setup/dist/
 on_install_setup/__pycache__/
+cleanup/build/
+cleanup/dist/
+cleanup/__pycache__/
 inno/
 
 #stuff below here is a template
