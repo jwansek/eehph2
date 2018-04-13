@@ -83,6 +83,8 @@ class App(tk.Tk):
         imageMenu.add_command(label='Flip image', accelerator = "F", image = self.__icon_flip, compound = tk.LEFT, command=self.img_viewer.buttons.flip)
         menu.add_command(label = "Source", underline = 0, command = lambda: webbrowser.open_new("https://github.com/jwansek/eehph2"))
 
+        self.new_state = "normal"
+
         self.bind('<Left>', self.img_viewer.buttons.backwards)
         self.bind('<Right>', self.img_viewer.buttons.forwards)
         self.bind('<space>', self.img_viewer.buttons.fullscreen)
@@ -95,6 +97,38 @@ class App(tk.Tk):
         self.bind('<R>', self.img_viewer.buttons.anticlockwise)
         self.bind('<f>', self.img_viewer.buttons.flip)
         self.bind('<Control-e>', self.img_viewer.edit_image)
+        self.bind('<F5>', self.refresh)
+        self.bind('<Configure>', self.__on_config)
+
+    def __on_config(self, event = None):
+        """Event for when the app is resized.
+        
+        Keyword Arguments:
+            event {event} -- Done to make the app work with events (default: {None})
+        """
+
+        self.old_state = self.new_state # assign the old state value
+        self.new_state = self.state() # get the new state value
+
+        if self.new_state == 'zoomed':
+            #maximise event
+            self.refresh()
+        elif self.new_state == 'normal' and self.old_state == 'zoomed':
+            #restore event
+            self.refresh()
+
+
+    def refresh(self, event = None):
+        """Reloads the current image.
+        Done so the image is resized when the app is resized.
+        
+        Keyword Arguments:
+            event {event} -- Used to make the method work with events. (default: {None})
+        """
+
+        if self.img_viewer.large_img is not None:
+            self.img_viewer.open_image(self.img_viewer.large_img)
+
 
     def __open(self, event=None):
         """Private. Used to open an image asking the user where
@@ -838,3 +872,13 @@ def get_filetypes():
     """
 
     return (('%s images' % type[1:].upper(), type) for type in IMPORT_FILES)
+
+#for testing purposes only
+if __name__ == "__main__":
+    try:
+        start = sys.argv[1]
+    except:
+        start = None
+    
+    root = App(path = start)
+    root.mainloop()

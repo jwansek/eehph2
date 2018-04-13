@@ -1,3 +1,7 @@
+Thank you for downloading this application. We hope it will be useful
+to you. This program is open source, with a GNU license. Its source code
+is mainatned at https://github.com/jwansek/eehph2.
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
