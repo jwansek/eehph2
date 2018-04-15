@@ -551,7 +551,7 @@ class Buttons(tk.Frame):
         self.parent = parent
 
         arrow_left = Image.open(os.path.join("Assets", "arrow_left.png"))
-        rotate_right = Image.open(os.path.join("Assets", "rotate_right.png")).resize((40, 40), Image.ANTIALIAS)
+        rotate_right = Image.open(os.path.join("Assets", "rotate_right.png"))
 
         self.img_backwards = ImageTk.PhotoImage(arrow_left)
         self.img_forwards = ImageTk.PhotoImage(arrow_left.rotate(180))
@@ -560,8 +560,8 @@ class Buttons(tk.Frame):
         self.img_clipboard = tk.PhotoImage(file = os.path.join("Assets", "clipboard.png"))
         self.img_fullscreen = tk.PhotoImage(file = os.path.join("Assets", "fullscreen.png"))
         self.img_save = tk.PhotoImage(file = os.path.join("Assets", "save.png"))
-        self.img_flip = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "flip.png")).resize((40, 40), Image.ANTIALIAS))
-        self.img_edit = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "edit.png")).resize((40, 40), Image.ANTIALIAS))
+        self.img_flip = tk.PhotoImage(file = os.path.join("Assets", "flip.png"))
+        self.img_edit = tk.PhotoImage(file = os.path.join("Assets", "edit.png"))
 
         self.lbl_text = tk.Label(self)
         self.lbl_text.grid(row = 0, column = 0, columnspan = 11)
