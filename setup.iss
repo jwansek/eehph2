@@ -1,5 +1,5 @@
 #define MyAppName "EEHPH Photo Viewer v2"
-#define MyAppVersion "2.2.4"
+#define MyAppVersion "2.2.5"
 #define MyAppPublisher "AE Computer Vision"
 #define MyAppURL "https://aecomputervision.blogspot.co.uk/"
 #define MyAppExeName "EEHPH2.exe"

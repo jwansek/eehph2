@@ -746,8 +746,9 @@ class EditWindow(tk.Toplevel):
         self.ent_x.grid(row = 0, column = 1, padx = 3, pady = 6)
         self.ent_y = ttk.Entry(lbf_resize, width = 5)
         self.ent_y.grid(row = 1, column = 1, padx = 3, pady = 6)
-        ttk.Button(lbf_resize, text = "Fix ratio", command = lambda: self.__fix_ratio("x")).grid(row = 0, column = 2, padx = 3, pady = 6)
-        ttk.Button(lbf_resize, text = "Fix ratio", command = lambda: self.__fix_ratio("y")).grid(row = 1, column = 2, padx = 3, pady = 6)
+        self.__icon_chain = tk.PhotoImage(file = os.path.join("Assets", "chain.png"))
+        ttk.Button(lbf_resize, image = self.__icon_chain, command = lambda: self.__fix_ratio("x")).grid(row = 0, column = 2, padx = 3, pady = 6)
+        ttk.Button(lbf_resize, image = self.__icon_chain, command = lambda: self.__fix_ratio("y")).grid(row = 1, column = 2, padx = 3, pady = 6)
 
         self.ent_x.insert(0, self.orig_dims[0])
         self.ent_y.insert(0, self.orig_dims[1])
