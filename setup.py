@@ -13,6 +13,7 @@ include_files = [
     "LICENSE.txt",
     "on_install_setup.exe",
     "cleanup.exe",
+    "manual_setup.exe",
     "EEHPH2_app.py",
     r"C:\Program Files (x86)\Python36_64\DLLs\tcl86t.dll",
     r"C:\Program Files (x86)\Python36_64\DLLs\tk86t.dll",
@@ -27,7 +28,7 @@ exec_ = Executable(
 setup(
     name = "EEHPH Photo Viewer v2",
     options = {"build_exe": {"packages": packages, "include_files": include_files}},
-    version = "2.2.5",
+    version = "2.2.6",
     description = "EEHPH2 by AE computer vision",
     author = "Edward Attenborough",
     executables = [exec_]
