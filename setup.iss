@@ -24,6 +24,7 @@ OutputBaseFilename=EEHPH2_installer
 Compression=lzma
 SolidCompression=yes
 UninstallDisplayIcon=C:\Users\Edward\Documents\workingdir\eehph2\build\exe.win-amd64-3.6\Assets\icon.ico
+WizardSmallImageFile=C:\Users\Edward\Documents\workingdir\eehph2\Assets\setupimg.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

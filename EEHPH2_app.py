@@ -364,7 +364,7 @@ class FileTree(tk.Frame):
             if name == 'Music':
                 image = self.music_icon
             elif name == 'Desktop':
-                image = self.music_icon
+                image = self.desktop_icon
             elif name == 'Documents':
                 image = self.documents_icon
             elif name == 'Downloads':
