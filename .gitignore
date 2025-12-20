@@ -8,6 +8,7 @@ manual_setup/build/
 manual_setup/dist/
 manual_setup/__pycache__/
 .vs/
+*.exe
 
 #stuff below here is a template
 # Byte-compiled / optimized / DLL files
