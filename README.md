@@ -1,19 +1,23 @@
-# eehph2
-EEHPH Photo Viewer v2
+# EEHPH Photo Viewer v2
 
-A light photo viewer designed for Windows 10.
+A simple windows image viewer I wrote when I was 15. Despite my programming knowledge not being as good back then, it's still much better than the default windows image viewer and has a lot of nice features I like. The file date metadata is incorrect since it was reset by the file system at some point, it was written in 2016 ish.
 
-The program can be run anywhere by right clicking and opening with this
-file. This is a problem because with program requires several .ddls to work.
-The solution is to set the program to a run a small script which changes the
-cwd to the one in which the app is located (EEHPH2.py) and then run the main 
-app (EEHPH2_app.py) as a module. However the program doens't know where the
-installation directory is. The solution is to use a script (on_install_setup.exe) 
-which sets the location of the installation directory in 
-%ALLUSERSPROFILE%/EEHPH2/location.txt. This script was compiled using pyinstaller
-and it's source is on_install_setup/on_install_setup.py. There is a another script,
-cleanup.exe, which was made in a similar way which deletes this file on uninstall.
+![Demo image](/Assets/demoimage.png)
 
-This program in written in Python3, compiled using cx_Freeze, and packaged using
-inno. The inno script is at setup.iss. The setup for the cx_Freeze is setup.py.
-This was done for the functionality of intallation and uninstallation scripts.
+## Features
+
+- ~44Mb install size, pretty good for a non-native app, much smaller than whatever electron shit kids are making these days
+- Basic image editing (resizing/rotating) built in
+- Nice file tree browser, that eventually turned into [tkFileBrowser](https://github.com/jwansek/tkFileBrowser/)
+- Nice installer, that actually cleans up itself properly when you uninstall, unlike most applications these days
+
+## Stuff to fix
+
+Things to fix if I can ever get round to it
+
+- [ ] Switch to using pyinstaller exclusively over cx_Freeze
+- [ ] Simplify the loading process so it doesn't have to find itself
+- [ ] Make a `requirements.txt`
+- [ ] Nicer icon
+- [ ] Replace the file tree with the newer [tkFileBrowser](https://github.com/jwansek/tkFileBrowser/) and try to fix any bugs in it, open the file tree at the correct place. Then it will use the windows API to get the correct icon for a file/directory
+- [ ] Reload image size on app resizing (not just maximizing)
