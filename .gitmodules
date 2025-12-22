@@ -1,0 +1,3 @@
+[submodule "tkFileBrowser"]
+	path = tkFileBrowser
+	url = git@github.com:jwansek/tkFileBrowser.git

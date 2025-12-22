@@ -1,0 +1,5 @@
+pillow
+screeninfo
+pywin32
+matplotlib
+pyinstaller

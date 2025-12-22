@@ -15,9 +15,9 @@ A simple windows image viewer I wrote when I was 15. Despite my programming know
 
 Things to fix if I can ever get round to it
 
-- [ ] Switch to using pyinstaller exclusively over cx_Freeze
-- [ ] Simplify the loading process so it doesn't have to find itself
-- [ ] Make a `requirements.txt`
+- [x] Switch to using pyinstaller exclusively over cx_Freeze
+- [x] Simplify the loading process so it doesn't have to find itself
+- [x] Make a `requirements.txt`
 - [ ] Nicer icon
-- [ ] Replace the file tree with the newer [tkFileBrowser](https://github.com/jwansek/tkFileBrowser/) and try to fix any bugs in it, open the file tree at the correct place. Then it will use the windows API to get the correct icon for a file/directory
-- [ ] Reload image size on app resizing (not just maximizing)
+- [x] Replace the file tree with the newer [tkFileBrowser](https://github.com/jwansek/tkFileBrowser/) and try to fix any bugs in it, open the file tree at the correct place. Then it will use the windows API to get the correct icon for a file/directory
+- [x] Reload image size on app resizing (not just maximizing)

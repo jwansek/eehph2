@@ -3,18 +3,27 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
 from PIL import Image, ImageTk, ImageOps
+from ctypes import windll
+import math as maths
+import tkFileBrowser
 import screeninfo
 import webbrowser
 import threading
 import win32file
 import win32api
 import shutil
+import time
 import sys
 import os
 
-IMPORT_FILES = ['.png', '.jpg', '.jfif', '.jpg_large', '.gif']
+IMPORT_FILES = ['.png', '.jpg', '.jfif', '.jpg_large', '.gif', ".webp"]
+# Not sure what the deal with this is? I swear we never had to do this? Its probably some windows 11 BS
+# windll.shell32.SetCurrentProcessExplicitAppUserModelID('sneed.feed.com')
 
 class App(tk.Tk):
+
+    last_event_hw = (None, None)
+    last_event_time = time.time()
 
     def __init__(self, path = None, *args, **kwargs):
         """Main class
@@ -25,15 +34,14 @@ class App(tk.Tk):
 
         tk.Tk.__init__(self)
 
-        self.title("EEHPH Photo Viewer v2")
-        self.iconbitmap(os.path.join("Assets", "icon.ico"))
+        self.title("EEHPH Photo Viewer v2.3.1")
+        self.iconbitmap(os.path.join(os.path.dirname(__file__), "Assets", "icon.ico"))
         self.geometry("%ix%i" % (max_width(), max_height()))
-        print(max_height(), max_width())
 
         paned = ttk.Panedwindow(self, orient = tk.HORIZONTAL)
         paned.pack(fill = tk.BOTH, expand = True)
 
-        self.drive_viewer = DriveViewer(self)
+        self.drive_viewer = EEHPHTree(self, command = lambda a: self.img_viewer.open_image(a), showhidden = True)
         paned.add(self.drive_viewer)
 
         self.img_viewer = ImageViewer(self)
@@ -50,36 +58,36 @@ class App(tk.Tk):
         self.config(menu=menu)
         fileMenu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label='File', menu=fileMenu, underline=0)
-        self.__icon_img = tk.PhotoImage(file=os.path.join('Assets', 'image.png'))
+        self.__icon_img = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), 'Assets', 'image.png'))
         fileMenu.add_command(label='Open image...', accelerator = "Ctrl+O", image=self.__icon_img, compound=tk.LEFT, command=self.__open)
-        self.__icon_folder = tk.PhotoImage(file=os.path.join('Assets', 'folder.png'))
+        self.__icon_folder = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), 'Assets', 'folder.png'))
         fileMenu.add_command(label='Open folder...', accelerator = "Ctrl+Shift+O", image=self.__icon_folder, compound=tk.LEFT, command=self.__open_folder)
         fileMenu.add_separator()
         fileMenu.add_command(label='Close', command=self.destroy)
         editMenu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label='Edit', menu=editMenu, underline=0)
-        self.__icon_clipboard = tk.PhotoImage(file=os.path.join('Assets', 'clipboard_small.png'))
+        self.__icon_clipboard = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), 'Assets', 'clipboard_small.png'))
         editMenu.add_command(label='Copy path to clipboard', accelerator = "Ctrl+C", image=self.__icon_clipboard, compound=tk.LEFT, command=self.img_viewer.buttons.clipboard)
-        self.__icon_save = tk.PhotoImage(file=os.path.join('Assets', 'save_small.png'))
+        self.__icon_save = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), 'Assets', 'save_small.png'))
         editMenu.add_command(label='Save image to another location', accelerator = "Ctrl+S", image=self.__icon_save, compound=tk.LEFT, command=self.img_viewer.buttons.save)
         editMenu.add_separator()
-        self.__icon_edit = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "edit.png")).resize((16, 16), Image.ANTIALIAS))
+        self.__icon_edit = ImageTk.PhotoImage(Image.open(os.path.join(os.path.dirname(__file__), "Assets", "edit.png")).resize((16, 16)))
         editMenu.add_command(label = 'Edit image', accelerator = "Ctrl+E", command = self.img_viewer.edit_image, image = self.__icon_edit, compound = tk.LEFT)
         viewMenu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label='View', menu=viewMenu, underline=0)
-        self.__icon_fullscreen = tk.PhotoImage(file=os.path.join('Assets', 'images.png'))
+        self.__icon_fullscreen = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), 'Assets', 'images.png'))
         viewMenu.add_command(label='Fullscreen', accelerator = "<Space> / F11", image=self.__icon_fullscreen, compound=tk.LEFT, command=self.img_viewer.buttons.fullscreen)
-        self.__icon_left = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "arrow_left.png")).resize((16, 16), Image.ANTIALIAS))
+        self.__icon_left = ImageTk.PhotoImage(Image.open(os.path.join(os.path.dirname(__file__), "Assets", "arrow_left.png")).resize((16, 16)))
         viewMenu.add_command(label='Previous image', accelerator = "←", image = self.__icon_left, compound = tk.LEFT, command=self.img_viewer.buttons.backwards)
-        self.__icon_right = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "arrow_left.png")).resize((16, 16), Image.ANTIALIAS).rotate(180))
+        self.__icon_right = ImageTk.PhotoImage(Image.open(os.path.join(os.path.dirname(__file__), "Assets", "arrow_left.png")).resize((16, 16)).rotate(180))
         viewMenu.add_command(label='Next image', accelerator = "→", image = self.__icon_right, compound = tk.LEFT, command=self.img_viewer.buttons.forwards)
         imageMenu = tk.Menu(menu, tearoff = 0)
         menu.add_cascade(label = "Image", menu = imageMenu, underline = 0)
-        self.__icon_clockwise = ImageTk.PhotoImage(ImageOps.mirror(Image.open(os.path.join("Assets", "rotate_right.png")).resize((16, 16), Image.ANTIALIAS)))
+        self.__icon_clockwise = ImageTk.PhotoImage(ImageOps.mirror(Image.open(os.path.join(os.path.dirname(__file__), "Assets", "rotate_right.png")).resize((16, 16))))
         imageMenu.add_command(label='Rotate 90° clockwise', accelerator = "R", image = self.__icon_clockwise, compound = tk.LEFT, command=self.img_viewer.buttons.clockwise)
-        self.__icon_anticlockwise = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "rotate_right.png")).resize((16, 16), Image.ANTIALIAS))
+        self.__icon_anticlockwise = ImageTk.PhotoImage(Image.open(os.path.join(os.path.dirname(__file__), "Assets", "rotate_right.png")).resize((16, 16)))
         imageMenu.add_command(label='Rotate 90° anticlockwise', accelerator = "Shift+R", image = self.__icon_anticlockwise, compound = tk.LEFT, command=self.img_viewer.buttons.anticlockwise)
-        self.__icon_flip = ImageTk.PhotoImage(Image.open(os.path.join("Assets", "flip.png")).resize((16, 16), Image.ANTIALIAS))
+        self.__icon_flip = ImageTk.PhotoImage(Image.open(os.path.join(os.path.dirname(__file__), "Assets", "flip.png")).resize((16, 16)))
         imageMenu.add_command(label='Flip image', accelerator = "F", image = self.__icon_flip, compound = tk.LEFT, command=self.img_viewer.buttons.flip)
         menu.add_command(label = "Source", underline = 0, command = lambda: webbrowser.open_new("https://github.com/jwansek/eehph2"))
 
@@ -106,16 +114,25 @@ class App(tk.Tk):
         Keyword Arguments:
             event {event} -- Done to make the app work with events (default: {None})
         """
-
-        self.old_state = self.new_state # assign the old state value
-        self.new_state = self.state() # get the new state value
-
-        if self.new_state == 'zoomed':
-            #maximise event
+        # only refresh if the window is resized, and a certain amount of time has passed since the last refresh. so we don't slow down the computer
+        # this perhaps causes too many screen flashes? this number could do with tuning. (photosensative sensory issues beware!)
+        # print(time.time(), event, type(event.widget) is App)
+        if ((event.height, event.width) != self.last_event_hw) and (time.time() - self.last_event_time >= 0.025) and (type(event.widget) is App):
+            # print("Resized", time.time() - self.last_event_time)
+            self.last_event_time = time.time()
             self.refresh()
-        elif self.new_state == 'normal' and self.old_state == 'zoomed':
-            #restore event
-            self.refresh()
+
+        self.last_event_hw = (event.height, event.width)
+
+        # self.old_state = self.new_state # assign the old state value
+        # self.new_state = self.state() # get the new state value
+
+        # if self.new_state == 'zoomed':
+        #     #maximise event
+        #     self.refresh()
+        # elif self.new_state == 'normal' and self.old_state == 'zoomed':
+        #     #restore event
+        #     self.refresh()
 
 
     def refresh(self, event = None):
@@ -126,8 +143,8 @@ class App(tk.Tk):
             event {event} -- Used to make the method work with events. (default: {None})
         """
 
-        if self.img_viewer.large_img is not None:
-            self.img_viewer.open_image(self.img_viewer.large_img)
+        if self.img_viewer.path is not None:
+            self.img_viewer.open_image(self.img_viewer.path)
 
 
     def __open(self, event=None):
@@ -166,259 +183,15 @@ class App(tk.Tk):
             else:
                 messagebox.showwarning('', 'There are no avaliable file types in the folder. Accepts %s.' % (' ').join(IMPORT_FILES))
 
-class DriveViewer(tk.Frame):
+class EEHPHTree(tkFileBrowser.TkFileBrowser):
+    def __init__(self, parent, command, *args, **kwargs):
+        super().__init__(parent = parent, command = command, refresh = int(9e9), rightclick_options = [], *args, **kwargs)
 
-    def __init__(self, parent):
-        """Widget made up of a ttk.Notebook to the user can see
-        which drives they want.
-        
-        Arguments:
-            parent {object} -- parent class
+    def refresh(self):
         """
-
-        tk.Frame.__init__(self, parent)
-
-        self.home_icon = tk.PhotoImage(file = os.path.join('Assets', 'home.png'))
-        self.disc_icon = tk.PhotoImage(file = os.path.join('Assets', 'disc.png'))
-        self.disk_drive = tk.PhotoImage(file = os.path.join('Assets', 'disk_drive.png'))
-        self.network_drive = tk.PhotoImage(file = os.path.join('Assets', 'network_drive.png'))
-        self.removable_disc = tk.PhotoImage(file = os.path.join('Assets', 'removable_drive.png'))
-        self.cdrive = tk.PhotoImage(file = os.path.join('Assets', 'cdrive.png'))
-
-        self.book = ttk.Notebook(self)
-        self.book.pack(fill = tk.BOTH, expand = True)
-        
-        self.book.add(FileTree(parent), text = 'Home', image = self.home_icon, compound = tk.LEFT)
-        for drive in self.__get_drives():
-            type_ = win32file.GetDriveType(drive)
-            if type_ == win32file.DRIVE_REMOVABLE:
-                image = self.removable_disc
-            elif type_ == win32file.DRIVE_CDROM:
-                image = self.disk_drive
-            elif type_ == win32file.DRIVE_FIXED:
-                if drive == "C:\\":
-                    image = self.cdrive
-                else:
-                    image = self.disc_icon
-            else:
-                image = self.network_drive
-            try:
-                self.book.add(FileTree(parent, start = drive), text = drive.replace('\\', ''), image = image, compound = tk.LEFT)
-            except PermissionError:
-                pass
-
-    def __get_drives(self):
-        """Private. Retutns the letters of all the drives
-        attatched to the system.
-        
-        Returns:
-            List -- List of drives e.g. ["C:\", "D:\"]
-        """ 
-
-        return win32api.GetLogicalDriveStrings().split('\x00')[:-1]
-
-class FileTree(tk.Frame):
-    columns = ('path', 'filetype', 'size')
-
-    def __init__(self, parent, start = os.path.expanduser('~')):
-        """Filetree widget to the user can navigate through files.
-        Made of ttk.Treeview. Only dirs and allowed images show up.
-        For speed, child dirs don't show up until they are clicked on.
-        
-        Arguments:
-            parent {object} -- class that calls this widget
-        
-        Keyword Arguments:
-            start {str} -- Drive to make tree of. Defaults to user's home folder. (default: {os.path.expanduser('~')})
+        Override this method to do nothing, since we don't need this feature and at the moment it is rather buggy.
         """
-
-        tk.Frame.__init__(self)
-        self.parent = parent
-        self.starting_dir = start
-
-        self.desktop_icon = tk.PhotoImage(file = os.path.join('Assets', 'desktop.png'))
-        self.download_icon = tk.PhotoImage(file = os.path.join('Assets', 'downloads.png'))
-        self.documents_icon = tk.PhotoImage(file = os.path.join('Assets', 'documents.png'))
-        self.images_icon = tk.PhotoImage(file = os.path.join('Assets', 'images.png'))
-        self.image_icon = tk.PhotoImage(file = os.path.join('Assets', 'image.png'))
-        self.music_icon = tk.PhotoImage(file = os.path.join('Assets', 'music.png'))
-        self.videos_icon = tk.PhotoImage(file = os.path.join('Assets', 'videos.png'))
-        self.threedee_icon = tk.PhotoImage(file = os.path.join('Assets', '3d_objs.png'))
-        self.warning_icon = tk.PhotoImage(file = os.path.join('Assets', 'warning.png'))
-        self.folder_icon = tk.PhotoImage(file = os.path.join('Assets', 'folder.png'))
-
-        self.tree = ttk.Treeview(self, height = 20, columns = self.columns, displaycolumns = 'size')
-        self.tree.heading('#0', text = 'Directory', anchor = tk.W)
-        self.tree.heading('size', text = 'Size', anchor = tk.W)
-        self.tree.column('path', width = 180)
-        self.tree.column('size', stretch = 1, width = 48)
-        self.tree.grid(row = 0, column = 0, sticky = 'nsew')
-
-        sbr_y = ttk.Scrollbar(self, orient = tk.VERTICAL, command = self.tree.yview)
-        sbr_x = ttk.Scrollbar(self, orient = tk.HORIZONTAL, command = self.tree.xview)
-        self.tree['yscroll'] = sbr_y.set
-        self.tree['xscroll'] = sbr_x.set
-        sbr_y.grid(row = 0, column = 1, sticky = 'ns')
-        sbr_x.grid(row = 1, column = 0, sticky = 'ew')
-        self.rowconfigure(0, weight = 1)
-        self.columnconfigure(0, weight = 1)
-
-        #add all the root nodes
-        for dir_ in self.__get_dirs(self.starting_dir):
-            self.__populate_node(os.path.join(self.starting_dir, dir_), root = True)
-
-        self.tree.bind('<<TreeviewOpen>>', self.__on_click)
-
-    def __get_dirs(self, start):
-        """Private. Gets child files and dirs that are in IMPORT_FILES.
-        Only allowed filetypes show up.
-        
-        Arguments:
-            start {str} -- Path of parent directory
-        
-        Returns:
-            List -- List of all allowed dirs and files.
-        """
-
-        dirs = []
-        files = []
-        try:
-            for dir_ in os.listdir(start):
-                type_ = self.__dir_type(dir_)
-                if type_ == 'directory':
-                    dirs.append(dir_)
-                elif type_ in IMPORT_FILES:
-                    files.append(dir_)
-
-            return dirs + files
-        except PermissionError:
-            messagebox.showerror('', 'Access Denied')
-        except NotADirectoryError:
-            messagebox.showerror('', 'Access Denied')
-
-    def __dir_type(self, dir_):
-        """Private. Works out the file type of an item
-        
-        Arguments:
-            dir_ {str} -- item of file to check
-        
-        Returns:
-            str -- returns 'hidden' or 'directory', else the file extenstion
-        """
-
-        extension = os.path.splitext(dir_)[-1:][0]
-        if dir_.startswith('.'):
-            return 'hidden'
-        elif extension == '':
-            return 'directory'
-        else:
-            return extension.lower()
-
-    def __on_click(self, event):
-        """Private. Event holder for when the user clicks on a node to expand
-        Works out child folders and dirs. Adds a 'dummy' child to each
-        item so that the + icon is there. This is removed if the folder has
-        usable items in it.
-        
-        Arguments:
-            event {event} -- so the method works with events
-        """
-
-        items = []
-        id = os.path.normpath(self.tree.focus())
-        if not os.path.exists(id):
-            messagebox.showwarning('', 'There are no folders or files that can be opened in this directory.')
-        else:
-            if self.__dir_type(id) == 'directory':
-                try:
-                    for dir_ in self.__get_dirs(id):
-                        items.append(dir_)
-                        self.__populate_node(os.path.join(id, dir_))
-                except TypeError:
-                    #is None since access denied
-                    return
-
-                if items != []:
-                    self.tree.delete(self.tree.get_children(id)[0])
-            else:
-                self.parent.img_viewer.open_image(path=id)
-
-    def __populate_node(self, path, root=False):
-        """Private. Populates a parent node. For more infomation, see
-        __on_click().
-        
-        Arguments:
-            path {str} -- path of parent node
-        
-        Keyword Arguments:
-            root {bool} -- Is the node a root? (probably not) (default: {False})
-        """
-
-        if os.path.splitext(path)[-1:][0] == '':
-            if root:
-                parent = ''
-            else:
-                parent = os.path.normpath(os.path.split(path)[:-1][0])
-            
-            name = [i for i in os.path.split(path)][-1]
-            if name == 'Music':
-                image = self.music_icon
-            elif name == 'Desktop':
-                image = self.desktop_icon
-            elif name == 'Documents':
-                image = self.documents_icon
-            elif name == 'Downloads':
-                image = self.download_icon
-            elif name == 'Pictures':
-                image = self.images_icon
-            elif name == '3D Objects':
-                image = self.threedee_icon
-            elif name == 'Videos':
-                image = self.videos_icon
-            else:
-                image = self.folder_icon
-            
-            try:
-                id = self.tree.insert(parent, tk.END, path, text=name, image=image, values=[path, '', ''])
-                self.tree.insert(id, tk.END, text='<*No avaliable files*>', image=self.warning_icon)
-            except tk.TclError:
-                pass
-
-        else:
-            if root:
-                parent = ''
-            else:
-                parent = os.path.normpath(os.path.split(path)[:-1][0])
-            name = [i for i in os.path.split(path)][-1]
-        try:
-            #set the id to the full path so we can't have multiple of the same id
-            id = self.tree.insert(parent, tk.END, path, text=name, image=self.image_icon, values=[path, '', self._FileTree__get_size(path)])
-        except tk.TclError:
-            pass
-
-    def __get_size(self, path):
-        """Private. Returns the size of a file. From:
-        https://pyinmyeye.blogspot.co.uk/2012/07/tkinter-multi-column-list-demo.html
-        
-        Arguments:
-            path {str} -- Path to file
-        
-        Returns:
-            str -- file size in bytes/KB/MB/GB
-        """
-
-        size = os.path.getsize(path)
-        KB = 1024.0
-        MB = KB * KB
-        GB = MB * KB
-        if size >= GB:
-            return ('{:,.1f} GB').format(size / GB)
-        elif size >= MB:
-            return ('{:,.1f} MB').format(size / MB)
-        elif size >= KB:
-            return ('{:,.1f} KB').format(size / KB)
-        else:
-            return ('{} bytes').format(size)
+        pass
 
 class ImageViewer(tk.Frame):
 
@@ -454,9 +227,10 @@ class ImageViewer(tk.Frame):
 
         self.lbl_img.config(image = "", text = "Loading...")
         print(path)
-        threading.Thread(target = self.__open, args = (path, None)).start() #for some reason it requires at least two args or weird stuff starts happening
+        self.parent.drive_viewer.see(path)
+        threading.Thread(target = self.__open, args = (path, )).start()
     
-    def __open(self, arg, _):
+    def __open(self, arg):
         """Private. Actually open an image. Work out an appropriate size and show on screen.
         
         Arguments:
@@ -491,9 +265,9 @@ class ImageViewer(tk.Frame):
         #https://stackoverflow.com/questions/6565703/math-algorithm-fit-image-to-screen-retain-aspect-ratio
         if imgwidth > maxwidth and imgheight > maxheight:
             if (maxwidth/maxheight) > (imgwidth/imgheight):
-                img = img.resize((int(imgwidth * maxheight / imgheight) - 5, maxheight - 5), Image.ANTIALIAS)
+                img = img.resize((int(imgwidth * maxheight / imgheight) - 5, maxheight - 5))
             else:
-                img = img.resize((maxwidth, int(imgheight * maxwidth / imgwidth)), Image.ANTIALIAS)
+                img = img.resize((maxwidth, int(imgheight * maxwidth / imgwidth)))
 
         #image is too wide
         if img.size[0] > maxwidth:
@@ -518,12 +292,12 @@ class ImageViewer(tk.Frame):
             baseheight = kwargs['height']
             hpercent = baseheight / float(img.size[1])
             wsize = int(float(img.size[0]) * float(hpercent))
-            return img.resize((wsize, baseheight), Image.ANTIALIAS)
+            return img.resize((wsize, baseheight))
         elif list(kwargs.keys())[0] == 'width':
             basewidth = kwargs['width']
             wpercent = basewidth / float(img.size[0])
             hsize = int(float(img.size[1]) * float(wpercent))
-            return img.resize((basewidth, hsize), Image.ANTIALIAS)
+            return img.resize((basewidth, hsize))
         raise TypeError("Missing argument: must have 'height' or 'width'.")
 
     def edit_image(self, event = None):
@@ -550,18 +324,18 @@ class Buttons(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
 
-        arrow_left = Image.open(os.path.join("Assets", "arrow_left.png"))
-        rotate_right = Image.open(os.path.join("Assets", "rotate_right.png"))
+        arrow_left = Image.open(os.path.join(os.path.dirname(__file__), "Assets", "arrow_left.png"))
+        rotate_right = Image.open(os.path.join(os.path.dirname(__file__), "Assets", "rotate_right.png"))
 
         self.img_backwards = ImageTk.PhotoImage(arrow_left)
         self.img_forwards = ImageTk.PhotoImage(arrow_left.rotate(180))
         self.img_rotate_anticlockwise = ImageTk.PhotoImage(ImageOps.mirror(rotate_right))
         self.img_rotate_clockwise = ImageTk.PhotoImage(rotate_right)
-        self.img_clipboard = tk.PhotoImage(file = os.path.join("Assets", "clipboard.png"))
-        self.img_fullscreen = tk.PhotoImage(file = os.path.join("Assets", "fullscreen.png"))
-        self.img_save = tk.PhotoImage(file = os.path.join("Assets", "save.png"))
-        self.img_flip = tk.PhotoImage(file = os.path.join("Assets", "flip.png"))
-        self.img_edit = tk.PhotoImage(file = os.path.join("Assets", "edit.png"))
+        self.img_clipboard = tk.PhotoImage(file = os.path.join(os.path.dirname(__file__), "Assets", "clipboard.png"))
+        self.img_fullscreen = tk.PhotoImage(file = os.path.join(os.path.dirname(__file__), "Assets", "fullscreen.png"))
+        self.img_save = tk.PhotoImage(file = os.path.join(os.path.dirname(__file__), "Assets", "save.png"))
+        self.img_flip = tk.PhotoImage(file = os.path.join(os.path.dirname(__file__), "Assets", "flip.png"))
+        self.img_edit = tk.PhotoImage(file = os.path.join(os.path.dirname(__file__), "Assets", "edit.png"))
 
         self.lbl_text = tk.Label(self)
         self.lbl_text.grid(row = 0, column = 0, columnspan = 11)
@@ -585,7 +359,7 @@ class Buttons(tk.Frame):
             list -- List of files that the app can open
         """
 
-        return [file for file in os.listdir(os.path.split(self.parent.parent.img_viewer.path)[:-1][0]) if os.path.splitext(file)[1].lower() in IMPORT_FILES]
+        return sorted([file for file in os.listdir(os.path.split(self.parent.parent.img_viewer.path)[:-1][0]) if os.path.splitext(file)[1].lower() in IMPORT_FILES], key=str.casefold)
 
     def backwards(self, event = None):
         """Event placeholder for when someone wants to go back an image.
@@ -703,7 +477,7 @@ class FullscreenWindow(tk.Toplevel):
         """
 
         tk.Toplevel.__init__(self, parent)
-        self.iconbitmap(os.path.join('Assets', 'icon.ico'))
+        self.iconbitmap(os.path.join(os.path.dirname(__file__), 'Assets', 'icon.ico'))
         self.attributes('-fullscreen', True)
         self.focus_set()
         self.update_idletasks()
@@ -711,7 +485,7 @@ class FullscreenWindow(tk.Toplevel):
         height = self.winfo_height()
         imgwidth = img.size[0]
         imgheight = img.size[1]
-        img = img.resize((int(imgwidth * height / imgheight) - 5, height - 5), Image.ANTIALIAS)
+        img = img.resize((int(imgwidth * height / imgheight) - 5, height - 5))
         tkimg = ImageTk.PhotoImage(img)
         lbl_img = ttk.Label(self, image=tkimg)
         lbl_img.image = tkimg
@@ -732,7 +506,7 @@ class EditWindow(tk.Toplevel):
         tk.Toplevel.__init__(self, parent)
         self.parent = parent
         self.img = img
-        self.iconbitmap(os.path.join("Assets", "icon.ico"))
+        self.iconbitmap(os.path.join(os.path.dirname(__file__), "Assets", "icon.ico"))
         self.resizable(0, 0)
         self.orig_dims = img.size
 
@@ -746,7 +520,7 @@ class EditWindow(tk.Toplevel):
         self.ent_x.grid(row = 0, column = 1, padx = 3, pady = 6)
         self.ent_y = ttk.Entry(lbf_resize, width = 5)
         self.ent_y.grid(row = 1, column = 1, padx = 3, pady = 6)
-        self.__icon_chain = tk.PhotoImage(file = os.path.join("Assets", "chain.png"))
+        self.__icon_chain = tk.PhotoImage(file = os.path.join(os.path.dirname(__file__), "Assets", "chain.png"))
         ttk.Button(lbf_resize, image = self.__icon_chain, command = lambda: self.__fix_ratio("x")).grid(row = 0, column = 2, padx = 3, pady = 6)
         ttk.Button(lbf_resize, image = self.__icon_chain, command = lambda: self.__fix_ratio("y")).grid(row = 1, column = 2, padx = 3, pady = 6)
 
@@ -764,8 +538,8 @@ class EditWindow(tk.Toplevel):
 
         ttk.Separator(self).grid(row = 2, column = 0, columnspan = 2, sticky = "ew")
 
-        self.__icon_tick = tk.PhotoImage(file = os.path.join("Assets", "tick.png"))
-        self.__icon_cross = tk.PhotoImage(file = os.path.join("Assets", "cross.png"))
+        self.__icon_tick = tk.PhotoImage(file = os.path.join(os.path.dirname(__file__), "Assets", "tick.png"))
+        self.__icon_cross = tk.PhotoImage(file = os.path.join(os.path.dirname(__file__), "Assets", "cross.png"))
 
         ttk.Button(self, text = "Save", image = self.__icon_tick, compound = tk.LEFT, command = self.__go).grid(row = 3, column = 0, padx = 5, pady = 5, sticky = tk.W)
         ttk.Button(self, text = "Cancel", image = self.__icon_cross, compound = tk.LEFT, command = lambda: self.destroy()).grid(row = 3, column = 1, padx = 5, pady = 5, sticky = tk.E)
@@ -822,7 +596,7 @@ class EditWindow(tk.Toplevel):
         """
 
         if self.ent_x.get().isdigit() and self.ent_y.get().isdigit():
-            self.img = self.img.resize((int(self.ent_x.get()), int(self.ent_y.get())), Image.ANTIALIAS)
+            self.img = self.img.resize((int(self.ent_x.get()), int(self.ent_y.get())))
             if self.flip.get():
                 self.img = ImageOps.mirror(self.img)
             if self.ent_rotate.get() != '':
@@ -876,6 +650,9 @@ def get_filetypes():
 
 #for testing purposes only
 if __name__ == "__main__":
+    print("My current __file__ is '%s'" % __file__)
+    print("My CWD is '%s'" % os.getcwd())
+    print("The things in my CWD are: ", os.listdir(os.getcwd()))
     try:
         start = sys.argv[1]
     except:
