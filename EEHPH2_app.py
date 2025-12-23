@@ -34,7 +34,7 @@ class App(tk.Tk):
 
         tk.Tk.__init__(self)
 
-        self.title("EEHPH Photo Viewer v2.3.1")
+        self.title("EEHPH Photo Viewer v2.3.2")
         self.iconbitmap(os.path.join(os.path.dirname(__file__), "Assets", "icon.ico"))
         self.geometry("%ix%i" % (max_width(), max_height()))
 
@@ -120,7 +120,7 @@ class App(tk.Tk):
         if ((event.height, event.width) != self.last_event_hw) and (time.time() - self.last_event_time >= 0.025) and (type(event.widget) is App):
             # print("Resized", time.time() - self.last_event_time)
             self.last_event_time = time.time()
-            self.refresh()
+            self.refresh(peek = False)
 
         self.last_event_hw = (event.height, event.width)
 
@@ -135,7 +135,7 @@ class App(tk.Tk):
         #     self.refresh()
 
 
-    def refresh(self, event = None):
+    def refresh(self, event = None, peek = True):
         """Reloads the current image.
         Done so the image is resized when the app is resized.
         
@@ -144,7 +144,7 @@ class App(tk.Tk):
         """
 
         if self.img_viewer.path is not None:
-            self.img_viewer.open_image(self.img_viewer.path)
+            self.img_viewer.open_image(self.img_viewer.path, peek = peek)
 
 
     def __open(self, event=None):
@@ -218,7 +218,7 @@ class ImageViewer(tk.Frame):
         self.buttons = Buttons(self)
         self.buttons.pack()
 
-    def open_image(self, path):
+    def open_image(self, path, peek = True):
         """Changes the label to show 'loading' and starts a loading thread.
         
         Arguments:
@@ -227,7 +227,8 @@ class ImageViewer(tk.Frame):
 
         self.lbl_img.config(image = "", text = "Loading...")
         print(path)
-        self.parent.drive_viewer.see(path)
+        if peek:
+            self.parent.drive_viewer.see(path)
         threading.Thread(target = self.__open, args = (path, )).start()
     
     def __open(self, arg):

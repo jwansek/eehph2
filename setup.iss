@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "EEHPH Photo Viewer"
-#define MyAppVersion "2.3.1"
+#define MyAppVersion "2.3.2"
 #define MyAppPublisher "Eden Attenborough"
 #define MyAppURL "https://boymoder.blog"
 #define MyAppExeName "EEHPH2.exe"
