@@ -2,7 +2,7 @@
 
 A simple windows image viewer I wrote when I was 15. Despite my programming knowledge not being as good back then, it's still much better than the default windows image viewer and has a lot of nice features I like. The file date metadata is incorrect since it was reset by the file system at some point, it was written in 2016 ish.
 
-![Demo image](/Assets/demoimage.png)
+![Demo image](/Assets/demoimage2.png)
 
 ## Features
 
